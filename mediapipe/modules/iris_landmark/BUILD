@@ -22,25 +22,6 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 mediapipe_simple_subgraph(
-    name = "iris_landmark_cpu",
-    graph = "iris_landmark_cpu.pbtxt",
-    register_as = "IrisLandmarkCpu",
-    deps = [
-        "//mediapipe/calculators/core:clip_vector_size_calculator",
-        "//mediapipe/calculators/core:split_vector_calculator",
-        "//mediapipe/calculators/image:image_cropping_calculator",
-        "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
-        "//mediapipe/calculators/tflite:tflite_converter_calculator",
-        "//mediapipe/calculators/tflite:tflite_inference_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
-        "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
-        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
-        "//mediapipe/calculators/util:landmark_projection_calculator",
-    ],
-)
-
-mediapipe_simple_subgraph(
     name = "iris_landmark_gpu",
     graph = "iris_landmark_gpu.pbtxt",
     register_as = "IrisLandmarkGpu",
@@ -65,19 +46,6 @@ mediapipe_simple_subgraph(
     register_as = "IrisLandmarkLeftAndRightGpu",
     deps = [
         ":iris_landmark_gpu",
-        ":iris_landmark_landmarks_to_roi",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/core:side_packet_to_stream_calculator",
-        "//mediapipe/calculators/image:image_properties_calculator",
-    ],
-)
-
-mediapipe_simple_subgraph(
-    name = "iris_landmark_left_and_right_cpu",
-    graph = "iris_landmark_left_and_right_cpu.pbtxt",
-    register_as = "IrisLandmarkLeftAndRightCpu",
-    deps = [
-        ":iris_landmark_cpu",
         ":iris_landmark_landmarks_to_roi",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",

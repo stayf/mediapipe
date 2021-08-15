@@ -54,17 +54,6 @@ public class MainActivity extends AppCompatActivity {
   // flight/queue plus one for the next frame from the camera.
   private static final int NUM_BUFFERS = 2;
 
-  static {
-    // Load all native libraries needed by the app.
-    System.loadLibrary("mediapipe_jni");
-    try {
-      System.loadLibrary("opencv_java3");
-    } catch (java.lang.UnsatisfiedLinkError e) {
-      // Some example apps (e.g. template matching) require OpenCV 4.
-      System.loadLibrary("opencv_java4");
-    }
-  }
-
   // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
   // frames onto a {@link Surface}.
   protected FrameProcessor processor;

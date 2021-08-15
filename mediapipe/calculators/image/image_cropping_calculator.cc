@@ -17,10 +17,7 @@
 #include <cmath>
 
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -215,57 +212,6 @@ absl::Status ImageCroppingCalculator::ValidateBorderModeForGPU(
 }
 
 absl::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kImageTag).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  const auto& input_img = cc->Inputs().Tag(kImageTag).Get<ImageFrame>();
-  cv::Mat input_mat = formats::MatView(&input_img);
-
-  RectSpec specs = GetCropSpecs(cc, input_img.Width(), input_img.Height());
-  int target_width = specs.width, target_height = specs.height,
-      rect_center_x = specs.center_x, rect_center_y = specs.center_y;
-  float rotation = specs.rotation;
-
-  // Get border mode and value for OpenCV.
-  int border_mode;
-  MP_RETURN_IF_ERROR(GetBorderModeForOpenCV(cc, &border_mode));
-
-  const cv::RotatedRect min_rect(cv::Point2f(rect_center_x, rect_center_y),
-                                 cv::Size2f(target_width, target_height),
-                                 rotation * 180.f / M_PI);
-  cv::Mat src_points;
-  cv::boxPoints(min_rect, src_points);
-
-  float output_width = min_rect.size.width;
-  float output_height = min_rect.size.height;
-  float scale = std::min({1.0f, output_max_width_ / output_width,
-                          output_max_height_ / output_height});
-  output_width *= scale;
-  output_height *= scale;
-
-  float dst_corners[8] = {0,
-                          output_height - 1,
-                          0,
-                          0,
-                          output_width - 1,
-                          0,
-                          output_width - 1,
-                          output_height - 1};
-  cv::Mat dst_points = cv::Mat(4, 2, CV_32F, dst_corners);
-  cv::Mat projection_matrix =
-      cv::getPerspectiveTransform(src_points, dst_points);
-  cv::Mat cropped_image;
-  cv::warpPerspective(input_mat, cropped_image, projection_matrix,
-                      cv::Size(output_width, output_height),
-                      /* flags = */ 0,
-                      /* borderMode = */ border_mode);
-
-  std::unique_ptr<ImageFrame> output_frame(new ImageFrame(
-      input_img.Format(), cropped_image.cols, cropped_image.rows));
-  cv::Mat output_mat = formats::MatView(output_frame.get());
-  cropped_image.copyTo(output_mat);
-  cc->Outputs().Tag(kImageTag).Add(output_frame.release(),
-                                   cc->InputTimestamp());
   return absl::OkStatus();
 }
 
@@ -533,21 +479,6 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
 
 absl::Status ImageCroppingCalculator::GetBorderModeForOpenCV(
     CalculatorContext* cc, int* border_mode) {
-  mediapipe::ImageCroppingCalculatorOptions options =
-      cc->Options<mediapipe::ImageCroppingCalculatorOptions>();
-
-  switch (options.border_mode()) {
-    case mediapipe::ImageCroppingCalculatorOptions::BORDER_ZERO:
-      *border_mode = cv::BORDER_CONSTANT;
-      break;
-    case mediapipe::ImageCroppingCalculatorOptions::BORDER_REPLICATE:
-      *border_mode = cv::BORDER_REPLICATE;
-      break;
-    default:
-      RET_CHECK_FAIL() << "Unsupported border mode for CPU: "
-                       << options.border_mode();
-  }
-
   return absl::OkStatus();
 }
 

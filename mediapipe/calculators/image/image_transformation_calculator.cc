@@ -15,9 +15,6 @@
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
@@ -395,109 +392,6 @@ absl::Status ImageTransformationCalculator::Close(CalculatorContext* cc) {
 }
 
 absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
-  cv::Mat input_mat;
-  mediapipe::ImageFormat::Format format;
-
-  const auto& input = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-  input_mat = formats::MatView(&input);
-  format = input.Format();
-
-  const int input_width = input_mat.cols;
-  const int input_height = input_mat.rows;
-  int output_width;
-  int output_height;
-  ComputeOutputDimensions(input_width, input_height, &output_width,
-                          &output_height);
-
-  if (output_width_ > 0 && output_height_ > 0) {
-    cv::Mat scaled_mat;
-    if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
-      int scale_flag =
-          input_mat.cols > output_width_ && input_mat.rows > output_height_
-              ? cv::INTER_AREA
-              : cv::INTER_LINEAR;
-      cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
-                 0, 0, scale_flag);
-    } else {
-      const float scale =
-          std::min(static_cast<float>(output_width_) / input_width,
-                   static_cast<float>(output_height_) / input_height);
-      const int target_width = std::round(input_width * scale);
-      const int target_height = std::round(input_height * scale);
-      int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
-      if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
-        cv::Mat intermediate_mat;
-        cv::resize(input_mat, intermediate_mat,
-                   cv::Size(target_width, target_height), 0, 0, scale_flag);
-        const int top = (output_height_ - target_height) / 2;
-        const int bottom = output_height_ - target_height - top;
-        const int left = (output_width_ - target_width) / 2;
-        const int right = output_width_ - target_width - left;
-        cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left,
-                           right,
-                           options_.constant_padding() ? cv::BORDER_CONSTANT
-                                                       : cv::BORDER_REPLICATE);
-      } else {
-        cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
-                   0, 0, scale_flag);
-        output_width = target_width;
-        output_height = target_height;
-      }
-    }
-    input_mat = scaled_mat;
-  }
-
-  if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    auto padding = absl::make_unique<std::array<float, 4>>();
-    ComputeOutputLetterboxPadding(input_width, input_height, output_width,
-                                  output_height, padding.get());
-    cc->Outputs()
-        .Tag("LETTERBOX_PADDING")
-        .Add(padding.release(), cc->InputTimestamp());
-  }
-
-  cv::Mat rotated_mat;
-  cv::Size rotated_size(output_width, output_height);
-  if (input_mat.size() == rotated_size) {
-    const int angle = RotationModeToDegrees(rotation_);
-    cv::Point2f src_center(input_mat.cols / 2.0, input_mat.rows / 2.0);
-    cv::Mat rotation_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
-    cv::warpAffine(input_mat, rotated_mat, rotation_mat, rotated_size);
-  } else {
-    switch (rotation_) {
-      case mediapipe::RotationMode_Mode_UNKNOWN:
-      case mediapipe::RotationMode_Mode_ROTATION_0:
-        rotated_mat = input_mat;
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_90:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_180:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
-        break;
-      case mediapipe::RotationMode_Mode_ROTATION_270:
-        cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
-        break;
-    }
-  }
-
-  cv::Mat flipped_mat;
-  if (flip_horizontally_ || flip_vertically_) {
-    const int flip_code =
-        flip_horizontally_ && flip_vertically_ ? -1 : flip_horizontally_;
-    cv::flip(rotated_mat, flipped_mat, flip_code);
-  } else {
-    flipped_mat = rotated_mat;
-  }
-
-  std::unique_ptr<ImageFrame> output_frame(
-      new ImageFrame(format, output_width, output_height));
-  cv::Mat output_mat = formats::MatView(output_frame.get());
-  flipped_mat.copyTo(output_mat);
-  cc->Outputs()
-      .Tag(kImageFrameTag)
-      .Add(output_frame.release(), cc->InputTimestamp());
-
   return absl::OkStatus();
 }
 

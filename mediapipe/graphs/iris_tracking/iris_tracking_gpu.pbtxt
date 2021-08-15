@@ -5,8 +5,6 @@
 # GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
-# GPU buffer. (GpuBuffer)
-output_stream: "output_video"
 # Face landmarks with iris. (NormalizedLandmarkList)
 output_stream: "face_landmarks_with_iris"
 
@@ -23,7 +21,7 @@ output_stream: "face_landmarks_with_iris"
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:output_video"
+  input_stream: "FINISHED:face_landmarks_with_iris"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
@@ -137,22 +135,12 @@ node {
   output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
 }
 
-# Renders annotations and overlays them on top of the input images.
+# Concatenate iris landmarks from both eyes.
 node {
-  calculator: "IrisAndDepthRendererGpu"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "FACE_LANDMARKS:updated_face_landmarks"
-  input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
-  input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
-  input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
-  input_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
-  input_stream: "NORM_RECT:face_rect"
-  input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
-  input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
-  input_stream: "DETECTIONS:face_detections"
-  input_side_packet: "FOCAL_LENGTH:focal_length_pixel"
-  output_stream: "IRIS_LANDMARKS:iris_landmarks"
-  output_stream: "IMAGE:output_video"
+  calculator: "ConcatenateNormalizedLandmarkListCalculator"
+  input_stream: "left_iris_landmarks"
+  input_stream: "right_iris_landmarks"
+  output_stream: "iris_landmarks"
 }
 
 node {

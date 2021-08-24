@@ -72,27 +72,10 @@ node {
   output_stream: "SIZE:input_image_size"
 }
 
-# Applies smoothing to a face landmark list. The filter options were handpicked
-# to achieve better visual results.
-node {
-  calculator: "LandmarksSmoothingCalculator"
-  input_stream: "NORM_LANDMARKS:face_landmarks"
-  input_stream: "IMAGE_SIZE:input_image_size"
-  output_stream: "NORM_FILTERED_LANDMARKS:smoothed_face_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
-      velocity_filter: {
-        window_size: 5
-        velocity_scale: 20.0
-      }
-    }
-  }
-}
-
 # Gets two landmarks which define left eye boundary.
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "smoothed_face_landmarks"
+  input_stream: "face_landmarks"
   output_stream: "left_eye_boundary_landmarks"
   node_options: {
     [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
@@ -106,7 +89,7 @@ node {
 # Gets two landmarks which define right eye boundary.
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
-  input_stream: "smoothed_face_landmarks"
+  input_stream: "face_landmarks"
   output_stream: "right_eye_boundary_landmarks"
   node_options: {
     [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
@@ -141,7 +124,7 @@ node {
 node {
   calculator: "UpdateFaceLandmarksCalculator"
   input_stream: "NEW_EYE_LANDMARKS:refined_eye_landmarks"
-  input_stream: "FACE_LANDMARKS:smoothed_face_landmarks"
+  input_stream: "FACE_LANDMARKS:face_landmarks"
   output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
 }
 
@@ -157,5 +140,22 @@ node {
   calculator: "ConcatenateNormalizedLandmarkListCalculator"
   input_stream: "updated_face_landmarks"
   input_stream: "iris_landmarks"
-  output_stream: "face_landmarks_with_iris"
+  output_stream: "bad_face_landmarks_with_iris"
+}
+
+# Applies smoothing to a face landmark list. The filter options were handpicked
+# to achieve better visual results.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:bad_face_landmarks_with_iris"
+  input_stream: "IMAGE_SIZE:input_image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:face_landmarks_with_iris"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
+      velocity_filter: {
+        window_size: 5
+        velocity_scale: 20.0
+      }
+    }
+  }
 }

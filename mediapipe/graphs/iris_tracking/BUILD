@@ -29,6 +29,7 @@ cc_library(
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/core:split_landmarks_calculator",
         "//mediapipe/calculators/core:concatenate_normalized_landmark_list_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
         "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_gpu",

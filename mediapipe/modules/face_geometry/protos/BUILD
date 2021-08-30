@@ -24,6 +24,14 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "face_geometry_full_info_proto",
+    srcs = ["face_geometry_full_info.proto"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "face_geometry_proto",
     srcs = ["face_geometry.proto"],
     deps = [

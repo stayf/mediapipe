@@ -24,6 +24,7 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "iris_tracking_gpu_deps",
     deps = [
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
@@ -34,6 +35,9 @@ cc_library(
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_and_depth_renderer_gpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_gpu",
+        "//mediapipe/modules/face_geometry:face_geometry_info_calculator",
+        "//mediapipe/modules/face_geometry:face_geometry_from_landmarks",
+        "//mediapipe/modules/face_geometry:env_generator_calculator",
     ],
 )
 

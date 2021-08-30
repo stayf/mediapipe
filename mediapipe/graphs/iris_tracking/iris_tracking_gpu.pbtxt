@@ -5,11 +5,10 @@
 # GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
-# Face landmarks with iris. (NormalizedLandmarkList)
-output_stream: "face_landmarks_with_iris"
-
 # GPU buffer. (GpuBuffer)
 output_stream: "output_video"
+
+output_stream: "face_geometry_full_info"
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -30,6 +29,24 @@ node {
     back_edge: true
   }
   output_stream: "throttled_input_video"
+}
+
+# Generates an environment that describes the current virtual scene.
+node {
+  calculator: "FaceGeometryEnvGeneratorCalculator"
+  output_side_packet: "ENVIRONMENT:environment"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceGeometryEnvGeneratorCalculatorOptions] {
+      environment: {
+        origin_point_location: TOP_LEFT_CORNER
+        perspective_camera: {
+          vertical_fov_degrees: 63.0  # 63 degrees
+          near: 1.0  # 1cm
+          far: 10000.0  # 100m
+        }
+      }
+    }
+  }
 }
 
 # Defines how many faces to detect. Iris tracking currently only handles one
@@ -145,28 +162,13 @@ node {
   output_stream: "UPDATED_FACE_LANDMARKS:updated_face_landmarks"
 }
 
-# Concatenate iris landmarks from both eyes.
-node {
-  calculator: "ConcatenateNormalizedLandmarkListCalculator"
-  input_stream: "left_iris_landmarks"
-  input_stream: "right_iris_landmarks"
-  output_stream: "iris_landmarks"
-}
-
-node {
-  calculator: "ConcatenateNormalizedLandmarkListCalculator"
-  input_stream: "updated_face_landmarks"
-  input_stream: "iris_landmarks"
-  output_stream: "bad_face_landmarks_with_iris"
-}
-
 # Applies smoothing to a face landmark list. The filter options were handpicked
 # to achieve better visual results.
 node {
   calculator: "LandmarksSmoothingCalculator"
-  input_stream: "NORM_LANDMARKS:bad_face_landmarks_with_iris"
+  input_stream: "NORM_LANDMARKS:updated_face_landmarks"
   input_stream: "IMAGE_SIZE:input_image_size"
-  output_stream: "NORM_FILTERED_LANDMARKS:face_landmarks_with_iris"
+  output_stream: "NORM_FILTERED_LANDMARKS:smoothed_face_landmarks"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
       velocity_filter: {
@@ -177,11 +179,69 @@ node {
   }
 }
 
+# Concatenate iris landmarks from both eyes.
+node {
+  calculator: "ConcatenateNormalizedLandmarkListCalculator"
+  input_stream: "left_iris_landmarks"
+  input_stream: "right_iris_landmarks"
+  output_stream: "iris_landmarks"
+}
+
+# Applies smoothing to a face landmark list. The filter options were handpicked
+# to achieve better visual results.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:iris_landmarks"
+  input_stream: "IMAGE_SIZE:input_image_size"
+  output_stream: "NORM_FILTERED_LANDMARKS:smoothed_iris_landmarks"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksSmoothingCalculatorOptions] {
+      velocity_filter: {
+        window_size: 5
+        velocity_scale: 20.0
+      }
+    }
+  }
+}
+
+node {
+  calculator: "ConcatenateNormalizedLandmarkListCalculator"
+  input_stream: "smoothed_face_landmarks"
+  input_stream: "smoothed_iris_landmarks"
+  output_stream: "smoothed_face_landmarks_with_iris"
+}
+
+# Puts the single set of smoothed landmarks back into a collection to simplify
+# passing the result into the `FaceGeometryFromLandmarks` subgraph.
+node {
+  calculator: "ConcatenateLandmarListVectorCalculator"
+  input_stream: "smoothed_face_landmarks"
+  output_stream: "multi_smoothed_face_landmarks"
+}
+
+# Extracts face geometry for multiple faces from a vector of face landmark
+# lists.
+node {
+  calculator: "FaceGeometryFromLandmarks"
+  input_side_packet: "ENVIRONMENT:environment"
+  input_stream: "IMAGE_SIZE:input_image_size"
+  input_stream: "MULTI_FACE_LANDMARKS:multi_smoothed_face_landmarks"
+  output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+}
+
+node {
+  calculator: "FaceGeometryInfoCalculator"
+  input_stream: "IMAGE_SIZE:input_image_size"
+  input_stream: "SMOOTHED_FACE_LANDMARKS_WITH_IRIS:smoothed_face_landmarks_with_iris"
+  input_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+  output_stream: "FACE_GEOMETRY_FULL_INFO:face_geometry_full_info"
+}
+
 # Renders annotations and overlays them on top of the input images.
 node {
   calculator: "IrisAndDepthRendererGpu"
   input_stream: "IMAGE:throttled_input_video"
-  input_stream: "FACE_LANDMARKS:updated_face_landmarks"
+  input_stream: "FACE_LANDMARKS:smoothed_face_landmarks"
   input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
   input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
   input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"

@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package mediapipe.face_geometry;
+
+import "mediapipe/framework/formats/landmark.proto";
+
+option java_package = "com.google.mediapipe.modules.facegeometry";
+option java_outer_classname = "FaceGeometryFullInfoProto";
+
+message FaceGeometryFullInfo {
+
+  repeated float info = 1;
+
+  optional NormalizedLandmarkList landmarks = 2;
+}

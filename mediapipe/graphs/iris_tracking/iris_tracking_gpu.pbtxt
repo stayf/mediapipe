@@ -5,9 +5,6 @@
 # GPU buffer. (GpuBuffer)
 input_stream: "input_video"
 
-# GPU buffer. (GpuBuffer)
-output_stream: "output_video"
-
 output_stream: "face_geometry_full_info"
 
 # Throttles the images flowing downstream for flow control. It passes through
@@ -23,7 +20,7 @@ output_stream: "face_geometry_full_info"
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:output_video"
+  input_stream: "FINISHED:face_geometry_full_info"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
@@ -77,20 +74,6 @@ node {
   calculator: "SplitNormalizedLandmarkListVectorCalculator"
   input_stream: "multi_face_landmarks"
   output_stream: "face_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
-      ranges: { begin: 0 end: 1 }
-      element_only: true
-    }
-  }
-}
-
-# Gets the very first and only face rect from "face_rects_from_landmarks"
-# vector.
-node {
-  calculator: "SplitNormalizedRectVectorCalculator"
-  input_stream: "face_rects_from_landmarks"
-  output_stream: "face_rect"
   node_options: {
     [type.googleapis.com/mediapipe.SplitVectorCalculatorOptions] {
       ranges: { begin: 0 end: 1 }
@@ -236,23 +219,3 @@ node {
   input_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
   output_stream: "FACE_GEOMETRY_FULL_INFO:face_geometry_full_info"
 }
-
-# Renders annotations and overlays them on top of the input images.
-node {
-  calculator: "IrisAndDepthRendererGpu"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "FACE_LANDMARKS:smoothed_face_landmarks"
-  input_stream: "EYE_LANDMARKS_LEFT:left_eye_contour_landmarks"
-  input_stream: "EYE_LANDMARKS_RIGHT:right_eye_contour_landmarks"
-  input_stream: "IRIS_LANDMARKS_LEFT:left_iris_landmarks"
-  input_stream: "IRIS_LANDMARKS_RIGHT:right_iris_landmarks"
-  input_stream: "NORM_RECT:face_rect"
-  input_stream: "LEFT_EYE_RECT:left_eye_rect_from_landmarks"
-  input_stream: "RIGHT_EYE_RECT:right_eye_rect_from_landmarks"
-  input_stream: "DETECTIONS:face_detections"
-  input_side_packet: "FOCAL_LENGTH:focal_length_pixel"
-  output_stream: "IRIS_LANDMARKS:iris_landmarks2"
-  output_stream: "IMAGE:output_video"
-}
-
-

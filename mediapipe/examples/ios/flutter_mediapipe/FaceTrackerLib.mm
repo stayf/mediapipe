@@ -4,12 +4,13 @@
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPTimestampConverter.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/modules/face_geometry/protos/face_geometry_full_info.pb.h"
 
 static const char *kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 static NSString *const kGraphName = @"iris_tracking_gpu";
 static const char *kInputStream = "input_video";
 static const char *kOutputStream = "output_video";
-static const char *kLandmarksOutputStream = "face_landmarks_with_iris";
+static const char *kLandmarksOutputStream = "face_geometry_full_info";
 
 @interface FaceTrackerLib () <MPPGraphDelegate>
 // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in
@@ -108,65 +109,76 @@ static const char *kLandmarksOutputStream = "face_landmarks_with_iris";
             fromStream:(const std::string &)streamName {
     if (streamName == kLandmarksOutputStream) {
         if (packet.IsEmpty()) {return;}
-        const auto &landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+        const auto &face_geometry_full_info = packet.Get<::mediapipe::face_geometry::FaceGeometryFullInfo>();
+
+        const auto &info = &face_geometry_full_info.info();
+        const auto &landmarks = &face_geometry_full_info.landmarks();
         NSMutableArray < Landmark * > *result = [NSMutableArray array];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:1]];
+        [result addObject:[self extractLandmarkById:landmarks atId:1]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:10]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:152]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:234]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:454]];
+        [result addObject:[self extractLandmarkById:landmarks atId:10]];
+        [result addObject:[self extractLandmarkById:landmarks atId:152]];
+        [result addObject:[self extractLandmarkById:landmarks atId:234]];
+        [result addObject:[self extractLandmarkById:landmarks atId:454]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:35]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:124]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:46]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:53]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:52]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:65]];
+        [result addObject:[self extractLandmarkById:landmarks atId:124]];
+        [result addObject:[self extractLandmarkById:landmarks atId:46]];
+        [result addObject:[self extractLandmarkById:landmarks atId:53]];
+        [result addObject:[self extractLandmarkById:landmarks atId:52]];
+        [result addObject:[self extractLandmarkById:landmarks atId:65]];
+        [result addObject:[self extractLandmarkById:landmarks atId:55]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:265]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:353]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:276]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:283]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:282]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:295]];
+        [result addObject:[self extractLandmarkById:landmarks atId:285]];
+        [result addObject:[self extractLandmarkById:landmarks atId:295]];
+        [result addObject:[self extractLandmarkById:landmarks atId:282]];
+        [result addObject:[self extractLandmarkById:landmarks atId:283]];
+        [result addObject:[self extractLandmarkById:landmarks atId:276]];
+        [result addObject:[self extractLandmarkById:landmarks atId:353]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:468]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:473]];
+        [result addObject:[self extractLandmarkById:landmarks atId:468]];
+        [result addObject:[self extractLandmarkById:landmarks atId:473]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:33]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:159]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:133]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:145]];
+        [result addObject:[self extractLandmarkById:landmarks atId:33]];
+        [result addObject:[self extractLandmarkById:landmarks atId:159]];
+        [result addObject:[self extractLandmarkById:landmarks atId:133]];
+        [result addObject:[self extractLandmarkById:landmarks atId:145]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:263]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:386]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:362]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:374]];
+        [result addObject:[self extractLandmarkById:landmarks atId:362]];
+        [result addObject:[self extractLandmarkById:landmarks atId:386]];
+        [result addObject:[self extractLandmarkById:landmarks atId:263]];
+        [result addObject:[self extractLandmarkById:landmarks atId:374]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:469]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:470]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:471]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:472]];
+        [result addObject:[self extractLandmarkById:landmarks atId:471]];
+        [result addObject:[self extractLandmarkById:landmarks atId:470]];
+        [result addObject:[self extractLandmarkById:landmarks atId:469]];
+        [result addObject:[self extractLandmarkById:landmarks atId:472]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:474]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:475]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:476]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:477]];
+        [result addObject:[self extractLandmarkById:landmarks atId:474]];
+        [result addObject:[self extractLandmarkById:landmarks atId:475]];
+        [result addObject:[self extractLandmarkById:landmarks atId:476]];
+        [result addObject:[self extractLandmarkById:landmarks atId:477]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:78]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:308]];
+        [result addObject:[self extractLandmarkById:landmarks atId:78]];
+        [result addObject:[self extractLandmarkById:landmarks atId:308]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:81]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:13]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:311]];
+        [result addObject:[self extractLandmarkById:landmarks atId:81]];
+        [result addObject:[self extractLandmarkById:landmarks atId:13]];
+        [result addObject:[self extractLandmarkById:landmarks atId:311]];
 
-        [result addObject:[self extractLandmarkById:&landmarks atId:178]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:14]];
-        [result addObject:[self extractLandmarkById:&landmarks atId:402]];
+        [result addObject:[self extractLandmarkById:landmarks atId:178]];
+        [result addObject:[self extractLandmarkById:landmarks atId:14]];
+        [result addObject:[self extractLandmarkById:landmarks atId:402]];
 
-        [_delegate track:self didOutputLandmarks:result];
+        [result addObject:[self extractLandmarkById:landmarks atId:9]];
+
+        std::vector<float> info_vector_array(info->begin(), info->end());
+        NSMutableArray <NSNumber*> *info_ns_array = [NSMutableArray array];
+        for (auto el : info_vector_array) {
+            [info_ns_array addObject:[NSNumber numberWithFloat:el]];
+        }
+
+        [_delegate track:self didOutputLandmarks:result infoArray:info_ns_array];
     }
 }
 

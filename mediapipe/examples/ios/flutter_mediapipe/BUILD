@@ -28,6 +28,7 @@ objc_library(
     copts = ["-std=c++17"],
     data = [
         "//mediapipe/graphs/iris_tracking:iris_tracking_gpu.binarypb",
+        "//mediapipe/modules/face_geometry/data:geometry_pipeline_metadata_landmarks.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
         "//mediapipe/modules/iris_landmark:iris_landmark.tflite",
@@ -40,6 +41,7 @@ objc_library(
         "//conditions:default": [
             "//mediapipe/graphs/iris_tracking:iris_tracking_gpu_deps",
             "//mediapipe/framework/formats:landmark_cc_proto",
+            "//mediapipe/modules/face_geometry/protos:face_geometry_full_info_cc_proto",
         ],
     }),
 )

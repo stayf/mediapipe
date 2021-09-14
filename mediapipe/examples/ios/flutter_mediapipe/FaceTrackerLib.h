@@ -6,7 +6,7 @@
 @class FaceTrackerLib;
 
 @protocol FaceTrackerDelegate <NSObject>
-- (void)track: (FaceTrackerLib *)tracker didOutputLandmarks: (NSArray<Landmark *> *)landmarks;
+- (void)track: (FaceTrackerLib *)tracker didOutputLandmarks: (NSArray<Landmark *> *)landmarks infoArray:(NSArray <NSNumber*>*)info;
 - (void)track: (FaceTrackerLib *)tracker didOutputPixelBuffer: (CVPixelBufferRef)pixelBuffer;
 @end
 

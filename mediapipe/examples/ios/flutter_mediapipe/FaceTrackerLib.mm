@@ -69,6 +69,7 @@ static const char *kLandmarksOutputStream = "face_geometry_full_info";
     if (self) {
         self.isGraphInitialized = false;
         self.didReadCameraIntrinsicMatrix = false;
+        self.timestampConverter = [[MPPTimestampConverter alloc] init];
         self.mediapipeGraph = [[self class] loadGraphFromResource:kGraphName];
         //в данном варианте графа нет выходного видео потока
         //[self.mediapipeGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypePixelBuffer];
@@ -189,11 +190,13 @@ static const char *kLandmarksOutputStream = "face_geometry_full_info";
     return landmark;
 }
 
-- (void)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer {
+- (void)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer
+              timestamp:(CMTime)timestamp {
     if (self.isGraphInitialized) {
         [self.mediapipeGraph sendPixelBuffer:pixelBuffer
                                   intoStream:kInputStream
-                                  packetType:MPPPacketTypePixelBuffer];
+                                  packetType:MPPPacketTypePixelBuffer
+                                   timestamp:[self.timestampConverter timestampForMediaTime:timestamp]];
     }
 }
 

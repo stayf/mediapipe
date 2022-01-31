@@ -250,6 +250,16 @@ http_archive(
     ],
 )
 
+# You may run setup_android.sh to install Android SDK and NDK.
+android_ndk_repository(
+    name = "androidndk",
+	api_level = 21,
+)
+
+android_sdk_repository(
+    name = "androidsdk",
+)
+
 # iOS basic build deps.
 
 http_archive(
